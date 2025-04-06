@@ -1,0 +1,10 @@
+# Virtual environment
+venv/
+.venv/
+
+# Cached price data
+data/
+
+# Python cache
+__pycache__/
+*.py[cod]
