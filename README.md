@@ -118,3 +118,61 @@ Describes how signals are visualized, how the graphs and plots are saved, and wh
 *Images created with matplotlib. Stored in `images/`*
 
 ---
+
+## Backtesting Strategy Performance: `backtestStrategy.py`
+
+A backtesting module simulates how the strategy would have performed using historical data. It tracks trades, portfolio value, and capital allocation over time.
+
+### What is Backtesting?
+
+Backtesting allows the strategy to be tested on past data using defined logic and conditions. This helps evaluate:
+
+- Whether the signals would have been profitable
+- How the portfolio would have grown or lost money
+- When trades occurred and what actions were taken
+
+### Logic Used
+
+| Component     | Description                                                                 |
+|---------------|-----------------------------------------------------------------------------|
+| `Cash`        | Remaining uninvested capital                                                |
+| `Holdings`    | Value of Bitcoin held (if a trade is open)                                  |
+| `Total`       | Combined value of cash + holdings                                           |
+| `Trade`       | 1 for Buy, -1 for Sell, 0 for no trade                                       |
+| `inPosition`  | Tracks whether the system is currently in a trade (holding Bitcoin or not)  |
+| `entryPrice`  | Tracks price at time of entry for return calculation                        |
+
+The system executes trades when `Position` changes:
+
+- `Position > 0`: Enter a trade (buy Bitcoin using all capital)
+- `Position == -2`: Exit the trade (sell Bitcoin, move fully back to cash)
+
+### Portfolio Equity Curve: `plotBacktest.py`
+
+A visualization of the strategy’s overall portfolio value across time. This reflects **when the strategy was in/out of the market**, how long it held assets, and how well the value grew over time.
+
+#### What it shows
+
+- X-axis: Dates (timeline)
+- Y-axis: Total portfolio value ($)
+- Line: Cumulative equity curve from all trades
+
+#### Output
+
+- Image is saved automatically to: `images/portfolioEquityCurve.png`
+- Useful to visually identify:
+  - Periods of active trading
+  - Capital growth phases
+  - Drawdowns or missed opportunities
+
+---
+
+#### Sample Plot
+
+A typical equity curve may include flat periods (not in a trade) and spikes (in a profitable trade). This helps evaluate strategy effectiveness without needing to inspect each trade manually.
+
+```
+Portfolio equity curve saved to: images/portfolioEquityCurve.png
+```
+
+---
