@@ -176,3 +176,44 @@ Portfolio equity curve saved to: images/portfolioEquityCurve.png
 ```
 
 ---
+
+## Performance Metrics: `evaluatePerformance.py`
+
+Evaluates how well the strategy performed by calculating statistics from the backtest results. The file contains a function that takes the full backtested DataFrame and returns a dictionary of results including total return, number of trades, and win rate.
+
+#### What the Code Does
+
+The function goes through the backtested data and performs the following:
+
+- Retrieves the final portfolio value from the `"Total"` column to calculate the overall percentage return versus the initial capital.
+
+- Counts the number of trades by summing the absolute values of the `"Trade"` column. Since each `1` (buy) and `-1` (sell) is recorded in that column, this gives a total count of all actions taken.
+
+- Extracts only the rows where trades occurred, then walks through them using a loop. For every `1` (buy), it records the entry price. When a matching `-1` (sell) is found, it calculates the profit or loss by subtracting the entry price from the exit price.
+
+- After collecting all trades, it counts how many of those trades were profitable. The win rate is calculated by dividing the number of winning trades by the total number of completed trades, and then converting it to a percentage.
+
+#### Example Using Trade Data
+
+| Date       | Close    | High     | ... | Holdings | Cash    | Total     | Trade |
+|------------|----------|----------|-----|----------|---------|-----------|-------|
+| 2018-03-03 | 11489.70 | 11528.20 | ... | 10000.00 | 0.000   | 10000.00  | 1     |
+| 2018-03-13 | 9194.85  | 9470.37  | ... | 0.00     | 8002.69 | 8002.69   | -1    |
+
+Here:
+- A trade is entered at $11,489.70 on March 3 (buy)
+- It is exited at $9,194.85 on March 13 (sell)
+- This results in a loss of over $1,900
+- This trade is not counted as a win when calculating win rate
+
+This logic is repeated for every pair of buy/sell trades across the dataset. Each entry/exit pair is checked for profit or loss, and that outcome contributes to the win rate.
+
+**Why**
+
+Performance metrics quantify how effective a strategy is. They provide measurable answers to questions like:
+- Did the strategy grow the capital?
+- Was it consistent?
+- Did it have a good balance of wins and losses?
+
+This information is essential for comparing strategies, improving performance, and making decisions about deploying the strategy in a live or automated setting.
+
