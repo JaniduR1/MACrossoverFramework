@@ -217,3 +217,122 @@ Performance metrics quantify how effective a strategy is. They provide measurabl
 
 This information is essential for comparing strategies, improving performance, and making decisions about deploying the strategy in a live or automated setting.
 
+---
+
+## Stop Loss & Take Profit Logic: `backtestWithRiskControl.py`
+
+This module enhances the strategy by adding real-world risk management techniques — namely stop loss and take profit controls.
+
+These rules allow trades to exit early based on price movement, rather than waiting for a crossover signal. The goal is to limit large losses and secure profits more reliably.
+
+#### Logic Overview
+
+After entering a trade, each row is checked against two conditions:
+
+- **Stop Loss**: If the price drops more than a defined percentage below the entry price (e.g. 10%, 20%, or 50%), the trade is exited early to prevent a larger loss.
+- **Take Profit**: If the price increases above the entry price by a defined percentage (e.g. 1%, 5%, or 10%), the trade is exited early to lock in a gain.
+
+If neither condition is met, the trade will still exit on the next `-1` crossover signal as before.
+
+These thresholds are configurable. For example:
+
+```python
+backtestWithRiskControl(data, stopLoss=0.5, takeProfit=0.01)
+```
+
+This would exit any trade that falls 50% below or gains 1% above its entry price.
+
+
+#### Example Trade Outcome
+
+In a trade starting at `$11,489.70`, if the price reached `$11,604.60` (+1%), the take profit rule would trigger.  
+If the price fell to `$5,744.85` (-50%), the stop loss would activate instead.
+
+When risk controls are hit, the trade exits early — skipping the normal crossover sell signal.
+
+#### Equity Curve Behavior
+
+The resulting portfolio equity curve often shows "step-like" jumps:
+
+- A trade is entered  
+- A small move triggers an exit via take profit  
+- The portfolio returns to cash and waits
+
+This pattern is common when tight take profit thresholds are used. While it may lead to high win rates, it can also result in lower overall returns due to limited exposure and no compounding.
+
+### Why
+
+Stop loss and take profit logic bring strategy behavior closer to real-world expectations. They:
+
+- Prevent capital from being tied up in long, losing trades  
+- Allow gains to be locked in automatically  
+- Provide a flexible tool for managing volatility and fine-tuning risk
+
+This version of the strategy creates a strong foundation for further experimentation and optimization.
+
+---
+
+## Machine Learning Strategy: `createMLDataset.py` & `trainMLModel.py`
+
+This phase uses supervised machine learning to predict whether price will rise or fall over the next 3 days.  
+The model is trained on engineered features and outputs classification metrics to evaluate predictive power.
+
+#### Label Logic
+
+A 3-day lookahead label is generated:
+- If the closing price 3 days later is higher than today → label is `1`
+- Otherwise → label is `0`
+
+This gives the model a goal: identify patterns that historically led to upward or downward movement 3 days later.
+
+#### Feature Engineering
+
+The model uses a small set of technical features:
+
+| Feature         | Description |
+|-----------------|-------------|
+| Return_1D       | % change in price from previous day  
+| MA_5, MA_10     | 5-day and 10-day moving averages  
+| Volatility_5D   | Standard deviation of closing prices over 5 days (price risk)  
+| Volume_Change   | Day-to-day change in volume
+
+#### SMOTE for Class Imbalance
+
+Most trading data is unbalanced — price goes up more often than it goes down.  
+To prevent the model from learning to always predict the majority class, SMOTE is used to synthetically balance the `1` and `0` labels in the training set.
+
+#### Model Used
+
+A Random Forest classifier is trained on the balanced dataset. It predicts class labels (`0` or `1`) on unseen test data, and reports standard classification metrics:
+
+- **Accuracy**: Overall correct predictions
+- **Precision**: How often each prediction was correct
+- **Recall**: How many actual cases were found
+- **F1 Score**: Balance of precision and recall
+
+#### Example Output
+
+```
+ML Model Performance (3-day Lookahead):
+Accuracy: 50.97
+Precision (Up): 0.65
+Recall (Up): 0.22
+F1 (Up): 0.33
+Precision (Down): 0.48
+Recall (Down): 0.86
+F1 (Down): 0.61
+```
+
+This shows that the model predicts "Down" movements more consistently, while missing many upward moves — a sign that further feature tuning or label adjustments are needed.
+
+#### Visualizing Model Performance
+
+A confusion matrix is saved as an image at:
+
+```
+images/mlConfusionMatrix.png
+```
+
+This shows the number of correct and incorrect predictions per class, making it easier to evaluate where the model performs well or poorly.
+
+---
